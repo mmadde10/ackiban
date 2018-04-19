@@ -1,64 +1,122 @@
 (defproject ackiban "0.1.0-SNAPSHOT"
+  :source-paths ["src/clj" "src/cljs"]
 
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+  :dependencies [[org.clojure/clojure "1.7.0"]
+                 [org.clojure/clojurescript "1.7.122"]
+                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
 
-  :dependencies [[clj-time "0.14.3"]
-                 [compojure "1.6.0"]
-                 [cprop "0.1.11"]
-                 [funcool/struct "1.2.0"]
-                 [luminus-immutant "0.2.4"]
-                 [luminus-nrepl "0.1.4"]
-                 [luminus/ring-ttl-session "0.3.2"]
-                 [markdown-clj "1.0.2"]
-                 [metosin/muuntaja "0.5.0"]
-                 [metosin/ring-http-response "0.9.0"]
-                 [mount "0.1.12"]
-                 [org.clojure/clojure "1.9.0"]
-                 [org.clojure/tools.cli "0.3.6"]
-                 [org.clojure/tools.logging "0.4.0"]
-                 [org.webjars.bower/tether "1.4.3"]
-                 [org.webjars/bootstrap "4.0.0-2"]
-                 [org.webjars/font-awesome "5.0.9"]
-                 [org.webjars/jquery "3.2.1"]
-                 [ring-webjars "0.2.0"]
-                 [ring/ring-core "1.6.3"]
-                 [ring/ring-defaults "0.3.1"]
-                 [selmer "1.11.7"]]
+                 [reagent "0.5.1"]
+                 [re-frame "0.4.1"]
+                 [reagent-utils "0.1.5"]
+                 [secretary "1.2.3"]
+                 [cljsjs/firebase "2.2.7-1"]
+                 [matchbox "0.0.8-SNAPSHOT"]
 
-  :min-lein-version "2.0.0"
-  
-  :source-paths ["src/clj"]
-  :test-paths ["test/clj"]
-  :resource-paths ["resources"]
-  :target-path "target/%s/"
-  :main ^:skip-aot ackiban.core
+                 [ring "1.4.0"]
+                 [ring/ring-defaults "0.1.5"]
+                 [prone "0.8.2"]
+                 [compojure "1.4.0"]
+                 [selmer "0.9.2"]
+                 [environ "1.0.1"]]
 
-  :plugins [[lein-immutant "2.1.0"]]
+  :plugins [[lein-cljsbuild "1.1.0"]
+            [lein-environ "1.0.1"]
+            [lein-ring "0.9.7"]]
 
-  :profiles
-  {:uberjar {:omit-source true
-             :aot :all
-             :uberjar-name "ackiban.jar"
-             :source-paths ["env/prod/clj"]
-             :resource-paths ["env/prod/resources"]}
+  :ring {:handler ackiban.handler/app
+         :uberwar-name "ackiban.war"}
 
-   :dev           [:project/dev :profiles/dev]
-   :test          [:project/dev :project/test :profiles/test]
+  :min-lein-version "2.5.0"
 
-   :project/dev  {:jvm-opts ["-Dconf=dev-config.edn"]
-                  :dependencies [[pjstadig/humane-test-output "0.8.3"]
-                                 [prone "1.5.1"]
-                                 [ring/ring-devel "1.6.3"]
-                                 [ring/ring-mock "0.3.2"]]
-                  :plugins      [[com.jakemccrary/lein-test-refresh "0.19.0"]]
-                  
-                  :source-paths ["env/dev/clj"]
-                  :resource-paths ["env/dev/resources"]
-                  :repl-options {:init-ns user}
-                  :injections [(require 'pjstadig.humane-test-output)
-                               (pjstadig.humane-test-output/activate!)]}
-   :project/test {:jvm-opts ["-Dconf=test-config.edn"]
-                  :resource-paths ["env/test/resources"]}
-   :profiles/dev {}
-   :profiles/test {}})
+  :uberjar-name "ackiban.jar"
+
+  :main ackiban.server
+
+  :hooks [leiningen.cljsbuild]
+
+  :clean-targets ^{:protect false} ["resources/public/js"]
+
+  :cljsbuild {:builds {:app {:source-paths ["src/cljs"]
+                             :compiler {:output-to     "resources/public/js/app.js"
+                                        :output-dir    "resources/public/js/out"
+                                        ;;:externs       ["react/externs/react.js"]
+                                        :asset-path   "js/out"
+                                        :optimizations :none
+                                        :pretty-print  true}}}}
+
+  :profiles {:dev {:repl-options {:init-ns ackiban.handler
+                                  :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
+
+                   :dependencies [[ring-mock "0.1.5"]
+                                  [ring/ring-devel "1.4.0"]
+                                  [leiningen "2.5.3"]
+                                  [figwheel "0.4.0"]
+                                  [weasel "0.7.0"]
+                                  [com.cemerick/piggieback "0.2.1"]
+                                  [pjstadig/humane-test-output "0.7.0"]
+                                  [com.cemerick/double-check "0.6.1"]]
+
+                   :source-paths ["env/dev/clj"]
+                   :plugins [[lein-figwheel "0.4.0"]
+                             [com.cemerick/clojurescript.test "0.3.3"]]
+
+                   :injections [(require 'pjstadig.humane-test-output)
+                                (pjstadig.humane-test-output/activate!)]
+
+                   :figwheel {:http-server-root "public"
+                              :server-port 3449
+                              :nrepl-port 54424
+                              :css-dirs ["resources/public/css"]
+                              :ring-handler ackiban.handler/app}
+
+                   :env {:dev? true}
+
+                   :cljsbuild {:builds {:app {:source-paths ["env/dev/cljs"]
+                                              :compiler {:main "ackiban.dev"
+                                                         :source-map true}}
+                                        :test {:source-paths ["src/cljs"  "test/cljs"]
+                                               :notify-command ["phantomjs"
+                                                                :cljs.test/runner
+                                                                "test/vendor/es5-shim.js"
+                                                                "test/vendor/es5-sham.js"
+                                                                "test/vendor/console-polyfill.js"
+                                                                "target/test.js"]
+                                               :compiler {:output-to "target/test.js"
+                                                          :optimizations :whitespace
+                                                          :pretty-print true
+                                                          :preamble ["react/react.js"]}}
+                                        :test2 {:source-paths ["src/cljs"  "test/cljs"]
+                                               :notify-command ["phantomjs"
+                                                                :cljs.test/runner
+                                                                "test/vendor/es5-shim.js"
+                                                                "test/vendor/es5-sham.js"
+                                                                "test/vendor/console-polyfill.js"
+                                                                "target/test.js"
+                                                                ]
+                                               :compiler {:output-to "target/test.js"
+                                                          :optimizations :whitespace
+                                                          :pretty-print true
+                                                          :preamble ["react/react.js"]}}}
+                               :test-commands {"unit" ["phantomjs" :runner
+                                                       "test/vendor/es5-shim.js"
+                                                       "test/vendor/es5-sham.js"
+                                                       "test/vendor/console-polyfill.js"
+                                                       "target/test.js"]}}}
+
+             :uberjar {:env {:production true}
+                       :aot :all
+                       :omit-source true
+                       :cljsbuild {:jar true
+                                   :builds {:app
+                                            {:source-paths ["env/prod/cljs"]
+                                             :compiler
+                                             {:optimizations :whitespace
+                                              :pretty-print false}}}}}
+
+             :production {:ring {:open-browser? false
+                                 :stacktraces?  false
+                                 :auto-reload?  false}
+                          :cljsbuild {:builds {:app {:compiler {:main "ackiban.prod"}}}}}}
+
+  :aliases {"auto-test" ["do" "clean"
+                         ["cljsbuild" "auto" "test2"]]})

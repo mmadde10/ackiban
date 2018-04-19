@@ -1,24 +1,17 @@
 (ns ackiban.handler
-  (:require [compojure.core :refer [routes wrap-routes]]
-            [ackiban.layout :refer [error-page]]
-            [ackiban.routes.home :refer [home-routes]]
-            [compojure.route :as route]
-            [ackiban.env :refer [defaults]]
-            [mount.core :as mount]
-            [ackiban.middleware :as middleware]))
+  (:require [compojure.core :refer [GET defroutes]]
+            [compojure.route :refer [not-found resources]]
+            [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
+            [ring.middleware.reload :refer [wrap-reload]]
+            [selmer.parser :refer [render-file]]
+            [prone.middleware :refer [wrap-exceptions]]
+            [environ.core :refer [env]]))
 
-(mount/defstate init-app
-  :start ((or (:init defaults) identity))
-  :stop  ((or (:stop defaults) identity)))
+(defroutes routes
+  (GET "/" [] (render-file "templates/index.html" {:dev (env :dev?)}))
+  (resources "/")
+  (not-found "Not Found"))
 
-(mount/defstate app
-  :start
-  (middleware/wrap-base
-    (routes
-      (-> #'home-routes
-          (wrap-routes middleware/wrap-csrf)
-          (wrap-routes middleware/wrap-formats))
-      (route/not-found
-        (:body
-          (error-page {:status 404
-                       :title "page not found"}))))))
+(def app
+  (let [handler (wrap-defaults #'routes site-defaults)]
+    (if (env :dev?) (wrap-exceptions (wrap-reload handler)) handler)))

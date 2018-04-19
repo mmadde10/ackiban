@@ -1,8 +1,8 @@
-# ackiban
+# ackiban (a-cyþan)
 
-generated using Luminus version "2.9.12.47"
+verb. to show announce confirm— or to make known, annonce, tell, relate, proclaim, announce.
 
-FIXME
+AMP Article Reader in Clojure
 
 ## Prerequisites
 
@@ -18,4 +18,4 @@ To start a web server for the application, run:
 
 ## License
 
-Copyright © 2018 FIXME
+Copyright © 2018 Mark Madden
