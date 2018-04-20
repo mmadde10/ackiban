@@ -1,3 +1,12 @@
+(ns ackiban.components
+  (:require 
+    [reagent.core :as reagent]
+    [reagent.session :as session]
+    [re-frame.core :as rf :refer [dispatch
+                                  dispatch-sync
+                                  register-handler
+                                  register-sub
+                                  subscribe]]))
 (defn username-input []
   (let [username (subscribe [:username-input])]
     [:input {:type "text"
@@ -25,6 +34,6 @@
                          (.reset (.-target e)))}
      [:input {:type "text"
               :on-change #(reset! message (-> % .-target .-value))}]
-     [:button {:type "submit"} "Login"]])))
+     [:button {:type "submit"} "Login"]]))
 
 ;;Todo Add register form

@@ -1,29 +1,14 @@
-(defn on-going-chat []
-    [:div
-     [:label "Your username: "]
-     [username-input]
-  
-     [show-messages]
-  
-     [message-form]])
-  
-  (defn join-room-view []
-    (let [this-room        (atom (random-four-characters))
-          change-location #(set! (.-location js/window) (str "#/room/" @this-room))]
-      [:div
-       [:input {:placeholder "Room Name"
-                :type "text"
-                :on-change #(reset! this-room (-> % .-target .-value))}]
-       [:button {:type "submit"
-                 :on-click change-location}
-        "Join Room"]
-       [:button {:on-click change-location
-                 :type "submit"}
-        "Random Room"]]))
+(ns ackiban.views
+  (:require
+    [ackiban.subscription :as subscriptions]
+    [ackiban.core :as ackiban]
+    [ackiban.components :as components]
+    [reagent.session :as session]))
+
   
   (defn home-page []
-    (let [chat-room (subscribe [:current-chat-room])
-          messages  (subscribe [:chat-room-messages])]
+    (let [chat-room (subscriptions/subscribe [:current-chat-room])
+          messages  (subscriptions/subscribe [:chat-room-messages])]
       [:div
        [:div.container
         [:div.page-header
@@ -39,3 +24,9 @@
   
   (defn current-page []
     [:div [(session/get :current-page)]])
+
+  (defn login-view []
+      [:div
+        [:h2 "Login"]
+        [components/login-form]
+      ])

@@ -1,0 +1,2 @@
+;; Analyzed by ClojureScript 1.7.122
+{:name ackiban.subscriptions, :doc nil, :excludes #{}, :use-macros nil, :require-macros nil, :uses nil, :requires nil, :imports nil, :cljs.analyzer/constants {:seen #{:username-input :chat-room-messages :username :current-chat-room :chat-room :messages}, :order [:username-input :username :current-chat-room :chat-room :chat-room-messages :messages]}}
